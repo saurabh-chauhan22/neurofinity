@@ -7,4 +7,8 @@ pip
 python-dotenv
 tqdm
 typer
+pyaudio
+transformers
+scikit-learn
+bertopic
 -e .
