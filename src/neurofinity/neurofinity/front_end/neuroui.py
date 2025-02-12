@@ -1,99 +1,117 @@
-from streamlit import markdown, graphviz_chart
 import streamlit as st
 import time
 
-st.image("background.jpg",use_container_width=True)
+def main():
+    if "page" not in st.session_state:
+        st.session_state.page = "home"
+    if "recording" not in st.session_state:
+        st.session_state.recording = False  # Track recording state
+    
+    if st.session_state.page == "home":
+        show_home_page()
+    elif st.session_state.page == "process_audio":
+        process_audio()
+    elif st.session_state.page == "mind_map":
+        generate_mind_map()
 
-markdown(
-    """
-    <style>
-        /* Set the full-page background image by targeting the body element */
-        body {
-            background-size: cover; /* Cover the entire page */
-            background-position: center; /* Center the background image */
-            background-repeat: no-repeat; /* Do not repeat the image */
-            background-attachment: fixed; /* Fix the background image */
+def show_home_page():
+    st.image("background.jpg", use_container_width=True)
+    st.markdown("<h1 style='text-align: center;'>Neuroinfy</h1>", unsafe_allow_html=True)
+    
+    st.subheader("Upload an Audio File")
+    uploaded_file = st.file_uploader("Choose an MP3 or WAV file", type=["mp3", "wav"])
+    
+    if uploaded_file is not None:
+        st.audio(uploaded_file, format='audio/mp3' if uploaded_file.type == 'audio/mpeg' else 'audio/wav')
+        st.success("File uploaded successfully!")
+        st.session_state.page = "process_audio"
+        st.rerun()
+    
+    st.subheader("Record Your Voice")
+    
+    # Custom CSS for circular and larger buttons
+    st.markdown(
+        """
+        <style>
+        .stButton button {
+            border-radius: 50%;
+            width: 150px;
+            height: 150px;
+            font-size: 24px;
+            margin: 10px;
         }
-
-        /* Style for the header: full-width, fixed at the top, and centered */
-        .header {
-            background-color: #a3c6c4;
-            padding: 20px;
-            text-align: center;
-            width: 100%;
-            position: fixed;
-            top: 30px;
-            left: 0;
-            z-index: 1000;
-        }
-
-        /* Add top padding to the content to avoid being hidden under the fixed header */
-        .content {
-            padding-top: 90px; /* Adjust as needed based on header height */
-        }
-
-        /* Ensure the content is readable over the background image */
-        .content, .graphviz-container, footer {
-            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
-            padding: 10px;
-            border-radius: 10px;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-markdown(
-    """
-    <div class="header">
-        <h1 style="color: #0d0c0c;">Neuroinfy</h1>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-markdown('<div class="content">', unsafe_allow_html=True)
-
-markdown(
-    """
-    <div style="background-color: #fff8f0; padding: 5px; margin-top: 5px;">
-        <h2 style="color: #0d0c0c; text-align: center;">Upload an Audio File</h2>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-uploaded_file = st.file_uploader("Choose an MP3 or WAV file", type=["mp3", "wav"])
-
-if uploaded_file is not None:
-    st.audio(
-        uploaded_file,
-        format='audio/mp3' if uploaded_file.type == 'audio/mpeg' else 'audio/wav'
+        </style>
+        """,
+        unsafe_allow_html=True
     )
-    st.success("File uploaded successfully!")
+    
+    # Layout for Start and Stop buttons (side by side)
+    col1, col2 = st.columns(2)  # Two columns for side-by-side buttons
+    
+    with col1:
+        if st.button("🎤 Start", key="start_recording"):
+            st.session_state.recording = True
+            st.write("Recording started... Speak now!")
+    
+    with col2:
+        if st.button("⏹️ Stop", key="stop_recording"):
+            if st.session_state.recording:
+                st.session_state.recording = False
+                st.success("Recording stopped and saved successfully!")
+                st.session_state.page = "process_audio"
+                st.rerun()
+            else:
+                st.warning("Recording is not in progress.")
 
-st.subheader("Record Your Voice")
+def process_audio():
+    st.write("Processing audio and extracting summary...")
+    time.sleep(2)  # Simulated processing time
+    
+    # Simulated summary extraction
+    summary = {"Topic": "Task Management", "Key Points": ["Break tasks into steps", "Set reminders", "Use visuals"]}
+    st.session_state.summary = summary
+    
+    st.session_state.page = "mind_map"
+    st.rerun()
 
-if st.button("🎤", key="record", help="Click to start recording"):
-    with st.spinner('Recording... Speak now!'):
-        time.sleep(3)
-    st.success("Recording saved successfully!")
-
-
-
-
-
-# Close the container div
-markdown('</div>', unsafe_allow_html=True)
-
-markdown(
+def generate_mind_map():
+    summary = st.session_state.get("summary", {})
+    if not summary:
+        st.write("Mind map generation failed. No summary available.")
+        return
+    
+    # Define colors
+    main_topic_color = "#FF6F61"  # Main topic color
+    subtopic_color = "#6B5B95"    # Subtopic color
+    background_color = "#F0F2F6"  # Background color
+    
+    # Create the Graphviz graph
+    graph = f"""
+    digraph G {{
+        bgcolor="{background_color}";  // Set background color
+        fontname="Arial";  // Set font style
+        node [fontname="Arial", fontsize="20"];  // Set font size for nodes
+        edge [arrowhead=normal];  // Use normal arrows
+        
+        // Main topic (smaller curved-edge square, bold text)
+        "{summary["Topic"]}" [shape=box, style="filled,rounded", fillcolor="{main_topic_color}", fontsize="24", fontname="Arial-Bold", penwidth=2, width=1, height=0.5];
+        
+        // Subtopic nodes (curved-edge rectangles)
     """
-    <footer style="text-align:center; padding: 20px; color: #666;">
-        <p>Neuroinfy | Designed to help neurodivergent individuals stay organized and focused.</p>
-    </footer>
-    """,
-    unsafe_allow_html=True
-)
+    
+    # Add subtopics
+    for point in summary["Key Points"]:
+        graph += f'"{point}" [shape=box, style="filled,rounded", fillcolor="{subtopic_color}", fontsize="20"];\n'
+        graph += f'"{summary["Topic"]}" -> "{point}" [color="{subtopic_color}", penwidth=2];\n'
+    
+    graph += "}}"
+    
+    st.graphviz_chart(graph)
 
-markdown('</div>', unsafe_allow_html=True)
+def switch_page(page_name):
+    st.session_state.page = page_name
+    st.rerun()
+    
 
-st.set_option("client.showErrorDetails", True)
+if __name__ == "__main__":
+    main()
