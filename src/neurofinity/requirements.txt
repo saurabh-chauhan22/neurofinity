@@ -11,4 +11,5 @@ pyaudio
 transformers
 scikit-learn
 bertopic
+streamlit
 -e .

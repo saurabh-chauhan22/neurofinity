@@ -2,6 +2,7 @@ import streamlit as st
 import time
 
 from backend.audio_to_text import AudioToText
+from backend.nlp import NLPTransacripter
 
 def main():
     if "page" not in st.session_state:
@@ -24,6 +25,8 @@ def show_home_page():
     uploaded_file = st.file_uploader("Choose an MP3 or WAV file", type=["mp3", "wav"])
     audio_to_text_instance = AudioToText(audio_path=uploaded_file)
     audio_file_transcript = audio_to_text_instance.output_text()
+    transcript_to_summary = NLPTransacripter(transcript=audio_file_transcript)
+    output_dict = transcript_to_summary.task_extraction()
     if uploaded_file is not None:
         st.audio(uploaded_file, format='audio/mp3' if uploaded_file.type == 'audio/mpeg' else 'audio/wav')
         st.success("File uploaded successfully!")
