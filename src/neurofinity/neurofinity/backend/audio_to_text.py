@@ -43,8 +43,8 @@ class AudioToText:
             time.sleep(5)
             logger.info("Transcript:", transcript.json())
         else:
-            print(f"Request failed with status code {transcript.status_code}: {transcript.text}")
-        return     
+            logger.error(f"Request failed with status code {transcript.status_code}: {transcript.text}")
+        return transcript   
 
 # emotion_transcript = requests.post(EMOTION_MODEL_API_URL, headers=headers, data=audio_data)
 
