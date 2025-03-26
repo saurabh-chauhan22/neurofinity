@@ -1,8 +1,9 @@
 import streamlit as st
 import time
+import os
 
-from backend.audio_to_text import AudioToText
-from backend.nlp import NLPTransacripter
+from audio_to_text import AudioToText
+from nlp import NLPTranscripter
 
 def main():
     if "page" not in st.session_state:
@@ -23,12 +24,21 @@ def show_home_page():
     
     st.subheader("Upload an Audio File")
     uploaded_file = st.file_uploader("Choose an MP3 or WAV file", type=["mp3", "wav"])
-    audio_to_text_instance = AudioToText(audio_path=uploaded_file)
-    audio_file_transcript = audio_to_text_instance.output_text()
-    transcript_to_summary = NLPTransacripter(transcript=audio_file_transcript)
-    output_dict = transcript_to_summary.task_extraction()
+    print("Uploaded File : ",uploaded_file)
     if uploaded_file is not None:
-        st.audio(uploaded_file, format='audio/mp3' if uploaded_file.type == 'audio/mpeg' else 'audio/wav')
+        # Save uploaded file to disk
+        file_path = os.path.join("uploads", uploaded_file.name)
+        os.makedirs("uploads", exist_ok=True)  # Ensure directory exists
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+
+        st.audio(file_path, format='audio/mp3' if uploaded_file.type == 'audio/mpeg' else 'audio/wav')
+        audio_to_text_instance = AudioToText(audio_path=file_path)
+        audio_file_transcript = audio_to_text_instance.output_text()
+
+        transcript_to_summary = NLPTranscripter(transcript=audio_file_transcript)
+        output_dict = transcript_to_summary.task_extraction()
+        print("Output : {}",output_dict)  
         st.success("File uploaded successfully!")
         st.session_state.page = "process_audio"
         st.rerun()
@@ -86,12 +96,10 @@ def generate_mind_map():
         st.write("Mind map generation failed. No summary available.")
         return
     
-    # Define colors
     main_topic_color = "#FF6F61"  # Main topic color
     subtopic_color = "#6B5B95"    # Subtopic color
     background_color = "#F0F2F6"  # Background color
     
-    # Create the Graphviz graph
     graph = f"""
     digraph G {{
         bgcolor="{background_color}";  // Set background color

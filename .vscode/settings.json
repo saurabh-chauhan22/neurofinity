@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": [
+        "./src/neurofinity/neurofinity",
+        "./src/neurofinity/neurofinity/front_end"
+    ]
+}

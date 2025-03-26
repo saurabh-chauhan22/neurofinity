@@ -17,7 +17,6 @@ class AudioToText:
         constructor for audio path
         '''
         assert model_id is not None
-        assert audio_path is not None
         
         self.model_id = model_id    
         self.audio_path = audio_path
@@ -39,7 +38,7 @@ class AudioToText:
 
     def output_text(self):
         transcript = self.transcript_api_call()
-        if transcript.status_code == 200: #and emotion_transcript.status_code ==200
+        if transcript.status_code == 200: 
             time.sleep(5)
             logger.info("Transcript:", transcript.json())
         else:
