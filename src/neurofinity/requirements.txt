@@ -1,15 +1,42 @@
+# --- Core ---
+loguru
+typer
+python-dotenv
+tqdm
+
+# --- Web ---
+fastapi
+uvicorn[standard]
+pydantic>=2.0
+streamlit
+
+# --- Audio ---
+pyaudio
+
+# --- NLP (existing) ---
+transformers>=4.36.0
+scikit-learn
+bertopic
+
+# --- Mind Map Generation (NEW) ---
+anthropic>=0.39.0
+openai>=1.12.0
+
+# --- LoRA Fine-Tuning (NEW) ---
+peft>=0.7.0
+accelerate>=0.25.0
+datasets>=2.16.0
+sentencepiece>=0.2.0
+torch>=2.0.0
+
+# --- Evaluation ---
+rouge-score
+bert-score
+
+# --- Code Quality ---
 black
 flake8
 isort
-loguru
 mkdocs
-pip
-python-dotenv
-tqdm
-typer
-pyaudio
-transformers
-scikit-learn
-bertopic
-streamlit
+
 -e .

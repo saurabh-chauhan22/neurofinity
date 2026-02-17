@@ -18,7 +18,6 @@ EXTERNAL_DATA_DIR = DATA_DIR / "external"
 
 ENGLISH_MODEL_API_URL = "https://api-inference.huggingface.co/models/jonatasgrosman/wav2vec2-large-xlsr-53-english" 
 EMOTION_MODEL_API_URL = "https://api-inference.huggingface.co/models/ehcalabres/wav2vec2-lg-xlsr-en-speech-emotion-recognition"
-HUGGINGFACE_API_TOKEN = "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"
 
 
 MODELS_DIR = PROJ_ROOT / "models"
