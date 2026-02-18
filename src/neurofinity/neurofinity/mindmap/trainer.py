@@ -36,6 +36,10 @@ from typing import Optional
 import typer
 from loguru import logger
 
+import torch
+from torch import device
+
+from neurofinity.modeling.mindmap_evaluation import MindMapEvaluator
 
 app = typer.Typer()
 
@@ -90,6 +94,7 @@ class MindMapTrainer:
         self._model = None
         self._tokenizer = None
         self._trainer = None
+        self._mindmap_evaluator = None
 
         logger.info(
             f"MindMapTrainer initialized: base={base_model}, "
@@ -125,7 +130,9 @@ class MindMapTrainer:
             bias="none",
             task_type=TaskType.SEQ_2_SEQ_LM,
         )
-
+        
+        
+        
         self._model = get_peft_model(self._model, lora_config)
         trainable, total = self._model.get_nb_trainable_parameters()
         logger.info(
@@ -216,6 +223,22 @@ class MindMapTrainer:
             self._tokenize_function, batched=True,
             remove_columns=self._eval_dataset.column_names,
         )
+        
+        use_bf16 = False
+        use_fp16 = False
+        if device == "cuda":
+            gpu_name = torch.cuda.get_device_name(0)
+            compute_capability = torch.cuda.get_device_capability(0)
+            # bf16 requires compute capability >= 8.0 (Ampere+)
+            if compute_capability[0] >= 8:
+                use_bf16 = True
+                logger.info(f"GPU {gpu_name} supports bf16 - using bf16 precision")
+            else:
+                use_fp16 = True
+                logger.info(f"GPU {gpu_name} doesn't support bf16 - using fp16 precision")
+                logger.warning("Note: T5 has known fp16 overflow issues. Monitor for NaN losses.")
+        else:
+            logger.info("Using fp32 precision (CPU training)")
 
         # Training arguments optimized for H100 + LoRA
         training_args = Seq2SeqTrainingArguments(
@@ -228,36 +251,43 @@ class MindMapTrainer:
             warmup_ratio=self.warmup_ratio,
             weight_decay=0.01,
             # CRITICAL: Use bf16, NOT fp16 — T5 has known fp16 overflow bugs
-            bf16=True,
+            bf16=use_bf16,
+            fp16=use_fp16,
+            #CUDA specific device settings
+            dataloader_pin_memory=True,
+            dataloader_num_workers=2,
+            gradient_checkpointing=True,
             logging_dir=str(self.output_dir / "logs"),
             logging_steps=50,
             eval_strategy="steps",
             eval_steps=200,
             save_strategy="steps",
-            save_steps=500,
+            save_steps=400,
             save_total_limit=3,
             load_best_model_at_end=True,
             metric_for_best_model="eval_loss",
             predict_with_generate=True,
             generation_max_length=self.max_target_length,
-            report_to="none",  # Set to "wandb" if you want W&B logging
+            report_to="wandb",  # Set to "wandb" if you want W&B logging
             lr_scheduler_type="linear",
             optim="adamw_torch",
         )
 
+        self._mindmap_evaluator = MindMapEvaluator(self._tokenizer)
         # Initialize trainer
         self._trainer = Seq2SeqTrainer(
             model=self._model,
             args=training_args,
             train_dataset=tokenized_train,
             eval_dataset=tokenized_eval,
-            tokenizer=self._tokenizer,
+            compute_metrics=self._mindmap_evaluator.compute_metrics
         )
+        self._trainer.tokenizer = self._tokenizer
 
         logger.info("Starting training...")
         self._trainer.train()
-
         # Save the LoRA adapter
+
         self.save_model()
 
     def save_model(self, path: Optional[str] = None):

@@ -24,7 +24,7 @@ from loguru import logger
 
 from neurofinity.mindmap.generator import MindMapGenerator
 from neurofinity.mindmap.schemas import AccessibilityConfig
-
+from neurofinity.audio import AudioToText
 
 # ---------------------------------------------------------------------------
 # FastAPI app setup
@@ -181,7 +181,7 @@ async def mindmap_from_audio(
 
     try:
         # Step 1: Transcribe audio
-        from neurofinity.audio_to_text import AudioToText
+        
         transcriber = AudioToText(audio_path=temp_path)
         transcript_response = transcriber.output_text()
 

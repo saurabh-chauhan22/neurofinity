@@ -5,7 +5,7 @@ import time
 from typer import Typer
 from loguru import logger
 
-from config import ENGLISH_MODEL_API_URL,HUGGINGFACE_API_TOKEN,EMOTION_MODEL_API_URL
+from neurofinity.config import ENGLISH_MODEL_API_URL
  
 app = Typer()
 class AudioToText:
@@ -23,7 +23,7 @@ class AudioToText:
 
     @property
     def headers(self)->dict:
-        return {"Authorization": f"Bearer {HUGGINGFACE_API_TOKEN}",
+        return {"Authorization": f"Bearer {os.getenv('HUGGINGFACE_API_TOKEN')}",
     "Content-Type": "audio/wav"  }
        
     def transcript_api_call(self):
